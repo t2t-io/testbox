@@ -1,0 +1,44 @@
+#!/bin/bash
+NAME="app"
+set -e
+source ./common
+init_variables
+
+rm -f ${WORK_DIR}/${NAME}*.*
+
+# app_main.c
+#
+echo "[${NAME}] building ${NAME}_main.c ..."
+arm-none-eabi-gcc -c ${MACHINE_FLAG} -g ${SRC_DIR}/${NAME}_main.c -o ${WORK_DIR}/${NAME}_main.o
+
+# app.elf and app.map
+#
+cd ${WORK_DIR}
+echo "[${NAME}] generating ${NAME}.elf (and memory map file) ..."
+arm-none-eabi-ld -T ${SRC_DIR}/${NAME}.ld -Map ${NAME}.map ${NAME}_main.o -o ${NAME}.elf
+
+# app.bin
+#
+echo "[${NAME}] generating ${NAME}.bin ..."
+arm-none-eabi-objcopy -O binary ${NAME}.elf ${NAME}.bin
+
+
+# Display memory map file if necessary 
+#
+if [ "true" == "${SHOW_MAP}" ]; then
+	echo "[${NAME}] dump memory map: "
+	cat ${NAME}.map | awk '{printf "\t%s\n", $0}'
+fi
+
+
+# Generate header file for system to include
+#
+echo "[${NAME}] generating header file (${NAME}.h) for system to include ..."
+cat <<EOF > ./${NAME}.h
+#define APP_SIZE ($(ls -al ${NAME}.bin | awk '{print $5}'))
+static const uint8_t app[APP_SIZE] = {
+$(od -t x1 -An ${NAME}.bin | tr ' ' '\n' | grep -v "^$" | awk '{printf "0x%s,\n", $0}' | tr '\n' ' ')
+};
+EOF
+
+cd ${CURRENT_DIR}

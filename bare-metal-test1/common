@@ -1,0 +1,18 @@
+#!/bin/bash
+
+function init_variables {
+	[ "" == "$(which arm-none-eabi-as)" ] && echo "missing arm-none-eabi-as" && exit 1
+	[ "" == "$(which arm-none-eabi-gcc)" ] && echo "missing arm-none-eabi-gcc" && exit 1
+	[ "" == "$(which arm-none-eabi-ld)" ] && echo "missing arm-none-eabi-ld" && exit 1
+	[ "" == "$(which arm-none-eabi-objcopy)" ] && echo "missing arm-none-eabi-objcopy" && exit 1
+
+	export CURRENT_DIR=$(pwd)
+	export WORK_DIR=${CURRENT_DIR}/work
+	export SRC_DIR=${CURRENT_DIR}/${NAME}
+
+	export CFLAGS="-I${WORK_DIR}"
+	export MACHINE_FLAG="-mcpu=arm926ej-s"
+
+	mkdir -p ${WORK_DIR}
+}
+

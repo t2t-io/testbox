@@ -1,0 +1,12 @@
+#!/bin/bash
+
+./build_app
+./build_system
+
+/usr/local/Cellar/qemu/2.4.0/bin/qemu-system-arm \
+	-M versatilepb \
+	-m 128M \
+	-nographic \
+	-kernel ./work/system.bin \
+	-serial telnet:localhost:1235,server
+
