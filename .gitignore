@@ -30,3 +30,9 @@
 
 # Debug files
 *.dSYM/
+
+# Binary file as firmware
+*.bin
+
+# Memory map file
+*.map
