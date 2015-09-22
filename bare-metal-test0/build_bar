@@ -1,0 +1,15 @@
+#!/bin/bash
+NAME="bar"
+# arm-none-eabi-gcc -c -mcpu=arm926ej-s -g ${NAME}.c -o ${NAME}.o
+arm-none-eabi-gcc -c -mcpu=arm926ej-s ${NAME}.c -o ${NAME}.o
+arm-none-eabi-ld -T ${NAME}.ld -Map ${NAME}.map ${NAME}.o -o ${NAME}.elf
+arm-none-eabi-objcopy -O binary ${NAME}.elf ${NAME}.bin
+cat <<EOF > ./program.h
+#define PROGRAM_SIZE ($(ls -al ${NAME}.bin | awk '{print $5}'))
+static const uint8_t program[PROGRAM_SIZE] = {
+$(od -t x1 -An ${NAME}.bin | tr ' ' '\n' | grep -v "^$" | awk '{printf "0x%s,\n", $0}' | tr '\n' ' ')
+};
+EOF
+
+cat ./${NAME}.map
+cat ./program.h

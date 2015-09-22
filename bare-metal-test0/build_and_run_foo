@@ -1,0 +1,15 @@
+#!/bin/bash
+NAME="foo"
+set -e
+
+arm-none-eabi-as -mcpu=arm926ej-s -g startup.s -o startup.o
+arm-none-eabi-gcc -c -mcpu=arm926ej-s -g -I. ${NAME}.c -o ${NAME}.o
+arm-none-eabi-ld -T ${NAME}.ld ${NAME}.o startup.o -o ${NAME}.elf
+arm-none-eabi-objcopy -O binary ${NAME}.elf ${NAME}.bin
+
+/usr/local/Cellar/qemu/2.4.0/bin/qemu-system-arm \
+	-M versatilepb \
+	-m 128M \
+	-nographic \
+	-kernel ${NAME}.bin \
+	-serial telnet:localhost:1235,server
