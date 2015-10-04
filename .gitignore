@@ -36,3 +36,12 @@
 
 # Memory map file
 *.map
+
+# Ignore workdir
+work
+
+# Ignore nodejs modules
+node_modules
+
+# Ignore python intermediate files
+*.pyc
