@@ -45,3 +45,6 @@ node_modules
 
 # Ignore python intermediate files
 *.pyc
+
+# OS-specific files
+.DS_Store
