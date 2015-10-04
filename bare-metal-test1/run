@@ -3,7 +3,8 @@
 ./build_app
 ./build_system
 
-/usr/local/Cellar/qemu/2.4.0/bin/qemu-system-arm \
+#/usr/local/Cellar/qemu/2.4.0/bin/qemu-system-arm \
+/Users/yagamy/Work/workspaces/github/qemu/arm-softmmu/qemu-system-arm \
 	-M versatilepb \
 	-m 128M \
 	-nographic \
