@@ -1,0 +1,10 @@
+{
+  "id": "mainboard/7F000001/disk0",
+  "name": "used",
+  "created_at": "2015-10-04T15:32:18.173Z",
+  "updated_at": "2015-10-04T15:33:49.950Z",
+  "last_value": 17,
+  "value": 17,
+  "type": "number",
+  "unit_length": "%"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "mainboard/7F000001/ram",
+  "name": "used",
+  "created_at": "2015-10-04T15:32:18.170Z",
+  "updated_at": "2015-10-04T15:34:09.787Z",
+  "last_value": 977117184,
+  "value": 976855040,
+  "type": "number",
+  "unit_length": "bytes"
+}
