@@ -1,0 +1,142 @@
+#!/bin/bash
+
+# Running Examples:
+#
+# On VirtualBox
+#    PARTITION=/dev/mapper/vagrant--vg-root APPS=sensor_web,dhvac_agent ./stats cpu ram disk apps
+#
+#
+
+function sendData {
+	BOARD_TYPE=$1
+	BOARD_ID=$2
+	SENSOR=$3
+	DATA_TYPE=$4
+	VALUE=$5
+	UNIT_LENGTH=$6
+	P="${BOARD_TYPE}/${BOARD_ID}/${SENSOR}/${DATA_TYPE}"
+	[ "true" == "${STRING_VALUE}" ] && V="value=\"${VALUE}\"" || V="value:=${VALUE}"
+
+	[ "true" == "${OUTPUT_STDOUT}" ] && echo -e "DAT: $P\t$VALUE\t$UNIT_LENGTH"
+	[ "true" == "${OUTPUT_SENSORWEB}" ] && http --ignore-stdin http://localhost:${SENSORWEB_PORT}/api/v${SENSORWEB_API}/s/${P} ${V} unit_length=${UNIT_LENGTH} > /dev/null 2>&1
+}
+
+function cpu {
+	[ "" == "$(which mpstat)" ] && return
+	UTILIZATION=$(mpstat | awk '$3 ~ /CPU/ { for(i=1;i<=NF;i++) { if ($i ~ /%idle/) field=i } } $3 ~ /all/ { print 100 - $field }')
+	[ "" == "${UTILIZATION}" ] && UTILIZATION=$(mpstat | awk '$2 ~ /CPU/ { for(i=1;i<=NF;i++) { if ($i ~ /%idle/) field=i } } $2 ~ /all/ { print 100 - $field }')
+	sendData mainboard 7F000001 cpu usage $UTILIZATION "%"
+}
+
+function ram {
+	LINE=$(free -b | grep "^Mem")
+	TOTAL=$(echo $LINE | awk '{print $2}')
+	USED=$(echo $LINE | awk '{print $3}')
+	AVAILABLE=$(echo $LINE | awk '{print $4}')
+	sendData mainboard 7F000001 ram total $TOTAL bytes
+	sendData mainboard 7F000001 ram used $USED bytes
+	sendData mainboard 7F000001 ram available $AVAILABLE bytes
+}
+
+function disk {
+	[ "" == "${PARTITION}" ] && PARTITION="/dev/sda1"
+	[ "" == "${DISK_NAME}" ] && DISK_NAME="disk0"
+	LINE=$(df -T | grep "${PARTITION}")
+	TOTAL=$(echo $LINE | awk '{print $3}')
+	TOTAL=$(($TOTAL*1024))
+	USED=$(echo $LINE | awk '{print $6}')
+	USED=$(echo $USED | sed 's/%//g')
+	sendData mainboard 7F000001 $DISK_NAME total $TOTAL 'bytes'
+	sendData mainboard 7F000001 $DISK_NAME used $USED '%'
+	sendData mainboard 7F000001 $DISK_NAME partition $PARTITION
+}
+
+function app {
+	[ "" == "$1" ] && return
+	APP=$1
+	PID=$(ps aux | grep "$APP/app" | grep -v grep | awk '{print $2}')
+	if [ "" == "${PID}" ]; then
+		sendData system process $APP cpu -1 '%'
+		sendData system process $APP ram -1 '%'
+	else
+		LINE=$(top -bn1 | grep $PID)
+		CPU=$(echo $LINE | awk '{print $9}')
+		RAM=$(echo $LINE | awk '{print $10}')
+		sendData system process $APP cpu $CPU '%'
+		sendData system process $APP ram $RAM '%'
+	fi
+}
+
+function apps {
+	[ "" == "$APPS" ] && return
+	XS=$(echo $APPS | tr ',' '\n')
+	XS=($XS)
+	for a in "${XS[@]}"
+	do
+		app $a
+	done
+}
+
+function compare {
+	AAA=$1
+	BBB=$2
+	if [ ${AAA%.*} -eq ${BBB%.*} ] && [ ${AAA#*.} \> ${BBB#*.} ] || [ ${AAA%.*} -gt ${BBB%.*} ]; then
+		export RET="1"
+	else
+		export RET="0"
+	fi
+}
+
+function apps_x {
+	[ "" == "$APPS" ] && return
+	XS=$(echo $APPS | tr ',' '\n')
+	XS=($XS)
+	PIDS=""
+	OPTS=""
+	for a in "${XS[@]}"
+	do
+		PID=$(ps aux | grep "$a/app" | grep -v grep | awk '{print $2}')
+		if [ "" == "${PID}" ]; then
+			sendData system process $a cpu -1 '%'
+			sendData system process $a ram -1 '%'
+		else
+			PIDS=$(echo -e "${PIDS}${a}#${PID}|")
+			OPTS="${OPTS}-p${PID}"
+		fi
+	done
+
+	PIDS=($(echo ${PIDS} | tr '|' '\n'))
+	TMP=$(mktemp)
+	top -bn1 ${OPTS} > ${TMP}
+	for i in "${PIDS[@]}"
+	do
+		A=$(echo $i | awk -F'#' '{print $1}')
+		P=$(echo $i | awk -F'#' '{print $2}')
+		CPU=$(cat $TMP | grep $P | awk '{print $9}')
+		RAM=$(cat $TMP | grep $P | awk '{print $10}')
+		CPU_MAX="100.0"
+		RAM_MAX="100.0"
+		compare $CPU_MAX $CPU
+		[ "1" == "${RET}" ] && sendData system process $A cpu $CPU '%'
+		compare $RAM_MAX $CPU
+		[ "1" == "${RET}" ] && sendData system process $A ram $RAM '%'
+	done
+	rm -f ${TMP}
+}
+
+
+[ "" == "${WAIT_TIME}" ] && export WAIT_TIME="5"
+[ "" == "${SENSORWEB_PORT}" ] && export SENSORWEB_PORT="6020"
+[ "" == "${SENSORWEB_API}" ] && export SENSORWEB_API="1"
+[ "" == "${OUTPUT_STDOUT}" ] && export OUTPUT_STDOUT="true"
+[ "" == "${OUTPUT_SENSORWEB}" ] && export OUTPUT_SENSORWEB="true"
+
+[ "" == "$1" ] && echo "please specify functions to run, e.g. ./stats cpu ram disk" && exit 1
+
+while true; do
+	for var in "$@"
+	do
+		$var
+	done
+	sleep $WAIT_TIME
+done
