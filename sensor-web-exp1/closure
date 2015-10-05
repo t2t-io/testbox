@@ -1,0 +1,7 @@
+#!/bin/bash
+CURRENT=$(pwd)
+cd $(dirname $0)
+DIRNAME=$(pwd)
+cd ${CURRENT}
+
+find . -name '*.ls' | grep -v plugins | grep -v config | grep -v package | xargs -I{} sh -c "echo {} && lsc -c {}"

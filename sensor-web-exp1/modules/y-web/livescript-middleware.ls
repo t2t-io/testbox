@@ -19,7 +19,7 @@ require! {
 */
 
 {minify} = require \uglify-js
-livescript = require \LiveScript
+livescript = require \livescript
 require! <[fs url mkdirp path]>
 {join, sep, dirname} = path
 

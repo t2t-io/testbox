@@ -1,10 +1,11 @@
-
+require! <[y-web y-webapi-std]>
 BaseApp = require "./BaseApp"
 
 class WebApp extends BaseApp
   (@opts, @helpers) ->
     super opts, helpers
-    @default_plugins = <[web std-webapi]>
+    @.add-plugin require \y-web
+    @.add-plugin require \y-webapi-std
 
   init: (done) ->
     self = @

@@ -71,22 +71,8 @@ InitFunctions =
         opt.showHelp!
         process.exit 0
 
-      # Load configuration from $WORK_DIR/config/xxx.json, or .js
-      try
-        configFile = resource.resolveWorkPath 'config', "#{global.argv.config}.json"
-        DBG "loading #{configFile}"
-        global.config = require configFile
-      catch error
-        INFO "failed to load config: #{error}"
-
-      try
-        if not global.config?
-          configFile = resource.resolveWorkPath 'config', "#{global.argv.config}"
-          DBG "loading #{configFile}"
-          global.config = require configFile
-      catch error
-        INFO "failed to load config: #{error}"
-
+      # Load configuration from $WORK_DIR/config/xxx.json, or .ls
+      global.config = resource.loadConfig global.argv.config
       return process.exit 1 unless global.config?
 
       applyCmdConfigs global.argv.s, "string"
@@ -103,9 +89,9 @@ class BaseApp
     @name = @opts.name
     @resource = module.resource = helpers.resource
     @async-executor = helpers.async-executor
-    @default_plugins = []
     @plugin_instances = []
 
+  add-plugin: (p) -> return @opts.plugins.push p
 
   initLogger: ->
     {plugins} = @opts
@@ -119,6 +105,7 @@ class BaseApp
 
     stringifiers = config: (c) -> return JSON.stringify c, null, 4
 
+    /*
     for let p, i in plugins
       config = global.config[p]
       if config? and config[\logger]?
@@ -136,6 +123,7 @@ class BaseApp
               INFO "plugin[#{p}] loads a duplicate logging prefixer <#{name}>"
             else
               stringifiers[name] = func
+    */
 
     DBG "verbose (-v) is enabled" if global.argv.v? and global.argv.v
     level = if global.argv.v then \debug else \info
@@ -186,8 +174,6 @@ class BaseApp
     self = @
     {async-executor, resource, opts} = self
     {plugins} = opts
-    if @default_plugins?
-      plugins = @default_plugins ++ plugins
 
     for let init_func, i in InitFunctions
       DBG "booting: #{init_func.name} ..."
@@ -206,16 +192,16 @@ class BaseApp
           {config, app, plugins, self} = ctx
           for let p, i in plugins
             try
-              plugin = resource.loadPlugin p
-              logger = self.logger.child module: plugin: yes, name: p
+              name = p.NAME
+              logger = self.logger.child module: plugin: yes, name: name
               helpers = logger: logger
               helpers = self.extendify helpers, self.helpers
 
               c = {}
-              c = self.extendify c, config[p] if config[p]?
+              c = self.extendify c, config[name] if config[name]?
               c = self.extendify c, helpers: helpers
-              app.use plugin, c
-              self.plugin_instances.push plugin
+              app.use p, c
+              self.plugin_instances.push p
             catch error
               return done error
           return done!

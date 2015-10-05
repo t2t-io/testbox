@@ -1,0 +1,3 @@
+#!/bin/bash
+OPTS=$(find node_modules -maxdepth 1 -mindepth 1 -type d | xargs basename | grep -v "\.bin" | awk '{printf "--external=%s ", $0}')
+NODE_PATH=../modules browserify --node --debug ${OPTS} app.js > bundle.js

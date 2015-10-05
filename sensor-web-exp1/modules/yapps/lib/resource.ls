@@ -7,7 +7,7 @@
 #     3. $(dirname $0)/config   => path.dirname(process.argv[1])
 #
 #
-require! <[fs path]>
+require! <[fs path async]>
 
 settings =
   program_name: null
@@ -111,19 +111,29 @@ resource =
    * @param name, the name of configuration file to be loaded.
    */
   loadConfig: (name, callback) ->
-    global.tmp = found: false
     pathes =
       * path: "#{settings.config_dir}#{path.sep}#{name}.ls"
-        json: false
-      * path: "#{settings.config_dir}#{path.sep}#{name}.js"
         json: false
       * path: "#{settings.config_dir}#{path.sep}#{name}.json"
         json: true
 
-    for let p, i in pathes
-      if not global.tmp.found then global.tmp.found = LOAD_CONFIG p, callback
+    ret = found: no, config: null
 
-    if not global.tmp.found then return callback "cannot find config #{name}", null
+    for p in pathes
+      continue if ret.found
+      try
+        DBG "try #{p.path} ..."
+        text = "#{fs.readFileSync p.path}"
+        text = require \livescript .compile text, json: yes unless p.json
+        ret.config = JSON.parse text
+        ret.found = yes
+      catch error
+        console.log "stack: #{error.stack}"
+        continue
+
+    DBG "cannot find config #{name}" unless ret.found
+    return ret.config
+
 
 
   /**

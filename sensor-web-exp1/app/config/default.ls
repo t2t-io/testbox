@@ -1,9 +1,6 @@
-
-
-exports = module.exports =
   web:
     host: '0.0.0.0'
-    port: 6020
+    port: 11070
     api: 1
     express_partial_response: no
     express_method_overrid: no
@@ -16,8 +13,6 @@ exports = module.exports =
     verbose: yes
     communicators: [
       * name: \sensorboard
-        # url: \ws://192.168.1.183:10020/
-        # url: \tcp://192.168.1.183:7005/
         url: \tcp://127.0.0.1:7005/
         bearer: \ttyO5
         parser: \dhvac-sensorboard-v1

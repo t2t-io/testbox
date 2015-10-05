@@ -20,7 +20,7 @@ createApplication = (type, opts) ->
     app = new app_class opts, helpers
     return app
   catch error
-    INFO "failed to createApplication '#{app_type_name}', err: #{error}"
+    INFO "failed to createApplication '#{type}', err: #{error}"
     return process.exit 1
 
 
