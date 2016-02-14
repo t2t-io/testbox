@@ -13,7 +13,7 @@ import android.widget.Button;
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PlatformInterface {
 
     private MyEngine engine;
 
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
             jscw = IOUtils.toString(is);
             IOUtils.closeQuietly(is);
             System.out.println("jscw = " + jscw.length() + " bytes");
-            engine = new MyEngine(jscw, MyEngine.BLUETOOTH_LA_BEST_007, MyEngine.CONSTANT_FLUSH_TYPE_BY_DEMAND, true);
+            engine = new MyEngine(jscw, MyEngine.BLUETOOTH_LA_BEST_007, MyEngine.CONSTANT_FLUSH_TYPE_BY_DEMAND, true, this);
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -98,6 +98,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void bleWriteCharacteristic(MyEngine engine, byte[] bytes) {
+        for (byte b: bytes) {
+            System.out.println("bleWriteCharacteristic => byte: " + b);
+        }
+    }
+
+    @Override
+    public void onSystemInfo(MyEngine engine, String name, String value) {
+        System.out.println("onSystemInfo => " + name + ", " + value);
+    }
+
+    @Override
+    public void debug(MyEngine engine, String message) {
+        System.out.println("engineDebug => " + message);
     }
 }
 
