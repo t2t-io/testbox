@@ -32,11 +32,22 @@ public class MyEngine {
         inner.init(bluetooth, type, uuencoded);
     }
 
-    public void test(int v) {
+    public void testMotor1(int v) {
         try {
             int[] params = {v, 1};
             String[] param_names = {"value", "is_clockwise"};
             inner.perform(0x21, params, param_names);
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void testMotor2(int v) {
+        try {
+            int[] params = {v, 1};
+            String[] param_names = {"value", "is_clockwise"};
+            inner.perform(0x22, params, param_names);
         }
         catch (Exception ex) {
             ex.printStackTrace();
