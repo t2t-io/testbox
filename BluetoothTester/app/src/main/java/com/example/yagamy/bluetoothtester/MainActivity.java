@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                     if (legacy || Build.VERSION.SDK_INT < 21) {
                         adapter.stopLeScan(leScanCallback);
                     } else {
-                        adapter.getBluetoothLeScanner().stopScan(scanCallback);
+                        // adapter.getBluetoothLeScanner().stopScan(scanCallback);
                     }
                     scanButton.setText("Start Scan");
                     scanning = false;
@@ -153,17 +153,19 @@ public class MainActivity extends AppCompatActivity {
             if (legacy || Build.VERSION.SDK_INT < 21) {
                 adapter.startLeScan(leScanCallback);
             } else {
+                /*
                 ScanSettings settings = new ScanSettings.Builder()
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
                 ArrayList<ScanFilter> filters = new ArrayList<ScanFilter>();
                 adapter.getBluetoothLeScanner().startScan(filters, settings, scanCallback);
+                */
             }
         } else {
             if (legacy || Build.VERSION.SDK_INT < 21) {
                 adapter.stopLeScan(leScanCallback);
             } else {
-                adapter.getBluetoothLeScanner().stopScan(scanCallback);
+                // adapter.getBluetoothLeScanner().stopScan(scanCallback);
             }
         }
     }
@@ -180,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Bluetooth Scan Callback for Android v5.X
+    /*
     private ScanCallback scanCallback = new ScanCallback() {
         public void onScanResult(int callbackType, ScanResult result) {
             // [todo]
@@ -209,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+    */
 
     private String checkType(UUID u) {
         if (u.equals(BLE_SERVICE_OV3)) {
