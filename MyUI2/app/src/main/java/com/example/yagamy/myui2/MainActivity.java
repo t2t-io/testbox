@@ -33,7 +33,6 @@ import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.Button;
 import android.widget.TextView;
-
 import org.apache.commons.io.IOUtils;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -63,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements PlatformInterface
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        System.out.println("os = " + System.getProperty("os.name").toLowerCase());
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
