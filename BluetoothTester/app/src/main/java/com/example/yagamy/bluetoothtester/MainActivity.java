@@ -39,6 +39,8 @@ import com.neovisionaries.bluetooth.ble.advertising.UUIDs;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.t2t.android.utils.Test;
+import io.t2t.j2se.util.MyClass;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -83,6 +85,12 @@ public class MainActivity extends AppCompatActivity {
         bluetooth = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         adapter = bluetooth.getAdapter();
         handler = new Handler();
+
+        Test test = new Test("AAA");
+        consolePrintln(test.getMyName());
+
+        MyClass aa = new MyClass("bb");
+        consolePrintln(aa.getClassNameAdv());
     }
 
     private void grantBLE() {

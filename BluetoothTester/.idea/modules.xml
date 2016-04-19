@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BluetoothTester.iml" filepath="$PROJECT_DIR$/BluetoothTester.iml" />
+      <module fileurl="file://$PROJECT_DIR$/androidutils/androidutils.iml" filepath="$PROJECT_DIR$/androidutils/androidutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/javautil/javautil.iml" filepath="$PROJECT_DIR$/javautil/javautil.iml" />
     </modules>
   </component>
 </project>
