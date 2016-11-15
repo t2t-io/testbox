@@ -1,0 +1,28 @@
+{
+  "name": "bw",
+  "author": {
+    "name": [
+      "Yagamy"
+    ],
+    "email": "yagamy@gmail.com"
+  },
+  "description": "blue web",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index",
+  "engines": {
+    "node": "4.4.x"
+  },
+  "dependencies": {
+    "colors": "1.1.2",
+    "lodash": "^4.11.1",
+    "noble": "^1.7.0",
+    "express": "*",
+    "socket.io": "^1.5.1",
+    "socket.io-client": "^1.5.1"
+  },
+  "optionalDependencies": {}
+}
