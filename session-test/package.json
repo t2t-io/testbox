@@ -1,0 +1,24 @@
+{
+  "name": "session-test",
+  "author": {
+    "name": "yagamy",
+    "email": "yagamy@gmail.com"
+  },
+  "description": "Session Test",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index",
+  "dependencies": {
+    "express": "^4.0.0",
+    "pug": "*",
+    "express-session": "^1.11.1",
+    "session-file-store": "*",
+    "livescript": "1.5.0",
+    "uglify-js": "3.4.9",
+    "mkdirp": "*"
+  },
+  "optionalDependencies": {}
+}
