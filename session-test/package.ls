@@ -42,5 +42,6 @@ dependencies:
   livescript: \1.5.0
   \uglify-js : \3.4.9
   mkdirp: \*
+  emailjs: \*
 
 optionalDependencies: {}

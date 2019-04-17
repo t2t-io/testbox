@@ -23,10 +23,11 @@ $ ->
       form.submit!
 
 $ ->
-  "form[name='registration']" .validate do
+  $ "form[name='registration']" .validate do
     rules:
-      firstname: "required"
-      lastname: "required"
+      name:
+        required: yes
+        minlength: 3
       email:
         required: yes
         email: yes
@@ -34,11 +35,12 @@ $ ->
         required: yes
         minlength: 8
     messages:
-      firstname: "Please enter your firstname"
-      lastname: "Please enter your lastname"
+      name: 
+        required: "Please enter your name"
+        minlength: "Your name must be at least 3 characters long"
       password:
         required: "Please provide a password"
-        minlength: "Your password must be at least 5 characters long"
+        minlength: "Your password must be at least 8 characters long"
       email: "Please enter a valid email address"
     submitHandler: (form) ->
       form.submit!

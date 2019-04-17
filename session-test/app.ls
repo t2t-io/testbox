@@ -2,6 +2,7 @@
 #
 require! <[express pug]>
 livescript-middleware = require \./src/livescript-middleware
+email = require \emailjs
 session = require \express-session
 SFS = (require \session-file-store) session
 sfs-opts =
@@ -9,6 +10,12 @@ sfs-opts =
 
 const PORT = 7000
 const SESSION_MAX_AGES = 5m*60s*1000ms
+
+mailsrv = email.server.connect do
+  user: \ultron@t2t.io
+  password: \5gwifi4t2t
+  host: \smtp.gmail.com
+  ssl: yes
 
 app = express!
 app.set 'trust proxy', yes
@@ -25,7 +32,7 @@ app.use session do
     expires: new Date (Date.now! + SESSION_MAX_AGES)
     maxAge: SESSION_MAX_AGES
 
-app.use livescript-middleware src: "#{__dirname}/assets/scripts", dest: "#{__dirname}/work/js", compress: yes
+app.use livescript-middleware src: "#{__dirname}/assets/scripts", dest: "#{__dirname}/work/js"
 app.use '/css', express.static "#{__dirname}/assets/public/css"
 app.use '/js', express.static "#{__dirname}/work/js"
 app.use '/js', express.static "#{__dirname}/assets/public/js"
@@ -61,6 +68,16 @@ app.get '/login', (req, res) ->
 app.post '/actions/login', (req, res) ->
   console.log "login => #{JSON.stringify req.body}"
   res.send "/actions/login"
+
+app.get '/mail', (req, res) ->
+  mailsrv.send do
+    text: "headers:\n#{JSON.stringify req.headers, ' ', null}"
+    from: 'ultron@t2t.io'
+    to: 'yagamy@t2t.io'
+    cc: 'yagamy@gmail.com'
+    bcc: 'ultron@t2t.io'
+    subject: "hello world - #{new Date!}"
+  res.send "done."
 
 app.post '/actions/register', (req, res) ->
   console.log "register => #{JSON.stringify req.body}"
