@@ -43,5 +43,7 @@ dependencies:
   \uglify-js : \3.4.9
   mkdirp: \*
   emailjs: \*
+  mysql: \*
+  uuid: \*
 
 optionalDependencies: {}

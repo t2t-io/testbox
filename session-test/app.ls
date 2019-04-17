@@ -1,6 +1,7 @@
 #!/usr/bin/env lsc
 #
-require! <[express pug]>
+require! <[crypto]>
+require! <[express pug mysql uuid]>
 livescript-middleware = require \./src/livescript-middleware
 email = require \emailjs
 session = require \express-session
@@ -10,9 +11,21 @@ sfs-opts =
 
 const PORT = 7000
 const SESSION_MAX_AGES = 5m*60s*1000ms
+const SALT = 'ilovetty'
+const MAILER = 'ultron@t2t.io'
+const HOST = "https://nuc54250b.t2t.io"
+
+
+pool = global.pool = mysql.createPool do
+  connectionLimit: 5
+  host: \127.0.0.1
+  user: \root
+  password: \root
+  database: \aaa
+
 
 mailsrv = email.server.connect do
-  user: \ultron@t2t.io
+  user: MAILER
   password: \5gwifi4t2t
   host: \smtp.gmail.com
   ssl: yes
@@ -42,21 +55,15 @@ app.use express.json!
 
 app.get '/', (req, res) ->
   {session} = req
-  if session.views?
-    session.views = session.views + 1
-    res.setHeader \Content-Type, \text/html
-    {views, cookie} = session
-    {maxAge} = cookie
-    title = \hello
-    res.render \login, {views, maxAge, title}
-    # res.write "<p>views: #{session.views}</p>"
-    # res.write "<p>expires in: #{session.cookie.maxAge}s</p>"
-    # res.end!
+  res.setHeader \Content-Type, \text/html
+  {user} = session
+  if user?
+    res.render \control, {user}
   else
-    session.views = 1
-    res.end "Welcome to the file session demo. Refresh page!"
+    title = \login
+    res.render \login, {title}
 
-app.get '/login', (req, res) ->
+app.get '/views/login', (req, res) ->
   {session} = req
   session.views = session.views + 1
   res.setHeader \Content-Type, \text/html
@@ -65,23 +72,80 @@ app.get '/login', (req, res) ->
   title = \Login
   res.render \login, {session, title}
 
-app.post '/actions/login', (req, res) ->
-  console.log "login => #{JSON.stringify req.body}"
-  res.send "/actions/login"
-
-app.get '/mail', (req, res) ->
-  mailsrv.send do
-    text: "headers:\n#{JSON.stringify req.headers, ' ', null}"
-    from: 'ultron@t2t.io'
-    to: 'yagamy@t2t.io'
-    cc: 'yagamy@gmail.com'
-    bcc: 'ultron@t2t.io'
-    subject: "hello world - #{new Date!}"
-  res.send "done."
+app.get '/views/control', (req, res) ->
+  {session} = req
+  res.setHeader \Content-Type, \text/html
+  {user} = session
+  if user?
+    res.render \control, {user}
+  else
+    title = \login
+    res.render \login, {title}
 
 app.post '/actions/register', (req, res) ->
-  console.log "register => #{JSON.stringify req.body}"
-  res.send "/actions/register"
+  {body} = req
+  console.log "register => #{JSON.stringify body}"
+  {name, email, password} = body
+  pswdhash = ((crypto.createHmac 'sha256', SALT).update password .digest 'hex')
+  activation = uuid! .split '-' .join ''
+  agent = uuid! .split '-' .join ''
+  api = uuid! .split '-' .join ''
+  documentation = JSON.stringify {aa: 10, bb: yes, cc: 1.1, dd: "aa"}
+  updated_by = "root"
+  updated_from = req.ip
+  (err, connection) <- pool.getConnection
+  return res.send "err: #{err}" if err?
+  console.log "#{req.originalUrl}: get connection"
+  user = {email, name, pswdhash, activation, agent, api, documentation, updated_by, updated_from}
+  connection.query 'INSERT INTO Users SET ?', user, (error, results, fields) ->
+    if error?
+      res.send "err: #{error}" if error?
+      return connection.release!
+    connection.release!
+    user.id = results.insertId
+    req.session.user = user
+    res.render \control, {user}
+    mailsrv.send do
+      from: MAILER
+      to: email
+      bcc: MAILER
+      subject: "Welcome to Wstty Service"
+      text: """
+      Dear #{name},
+
+      Thanks for register wstty service. Please click #{HOST}/actions/activate/#{activation} to activate your user account. Thanks.
+
+      Best Regards,
+      Wstty Service Team
+      """
+
+app.get '/actions/activate/:activation', (req, res) ->
+  {params} = req
+  {activation} = params
+  updated_by = "root"
+  updated_from = req.ip
+  (err, connection) <- pool.getConnection
+  return res.send "err: #{err}" if err?
+  console.log "#{req.originalUrl}: get connection"
+  (error1, results, fields) <- connection.query 'SELECT * FROM `Users` WHERE activation = ?', [activation]
+  if error1?
+    console.log "#{req.originalUrl}: error1 => #{error1}"
+    res.send "error: #{error1}"
+    return connection.release!
+  if results.length is 0
+    console.log "#{req.originalUrl}: no such activation token #{activation}"
+    res.send "no such activation token #{activation}"
+    return connection.release!
+  user = req.session.user = results[0]
+  (error2, results, fields) <- connection.query 'UPDATE `Users` SET activated = 1 WHERE id = ?', [user.id]
+  if error2?
+    console.log "#{req.originalUrl}: error2 => #{error2}"
+    res.send "error: #{error2}"
+    return connection.release!
+  res.setHeader \Content-Type, \text/html
+  res.render \after_activation, {user}
+  return connection.release!
+
 
 server = app.listen PORT, ->
   console.log "listening #{PORT}"
