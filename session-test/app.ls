@@ -1,8 +1,9 @@
 #!/usr/bin/env lsc
 #
-require! <[crypto]>
+require! <[crypto http]>
 require! <[express pug mysql uuid]>
 livescript-middleware = require \./src/livescript-middleware
+sio = require \socket.io
 email = require \emailjs
 session = require \express-session
 SFS = (require \session-file-store) session
@@ -82,6 +83,32 @@ app.get '/views/control', (req, res) ->
     title = \login
     res.render \login, {title}
 
+app.post '/actions/login', (req, res) ->
+  {body} = req
+  {email, password} = body
+  pswdhash = ((crypto.createHmac 'sha256', SALT).update password .digest 'hex')
+  (err, connection) <- pool.getConnection
+  return res.send "err: #{err}" if err?
+  console.log "#{req.originalUrl}: get connection"
+  (error1, results, fields) <- connection.query 'SELECT * FROM `Users` WHERE email = ?', [email]
+  if error1?
+    console.log "#{req.originalUrl}: error1 => #{error1}"
+    res.send "error: #{error1}"
+    return connection.release!
+  if results.length is 0
+    res.setHeader \Content-Type, \text/html
+    res.render \login-failure-no-user, {email}
+    return connection.release!
+  user = results[0]
+  if user.pswdhash isnt pswdhash
+    res.setHeader \Content-Type, \text/html
+    res.render \login-failure-incorrect-password, {}
+    return connection.release!
+  req.session.user = user
+  res.setHeader \Content-Type, \text/html
+  res.render \after-login, {user}
+  return connection.release!
+
 app.post '/actions/register', (req, res) ->
   {body} = req
   console.log "register => #{JSON.stringify body}"
@@ -143,9 +170,16 @@ app.get '/actions/activate/:activation', (req, res) ->
     res.send "error: #{error2}"
     return connection.release!
   res.setHeader \Content-Type, \text/html
-  res.render \after_activation, {user}
+  res.render \after-activation, {user}
   return connection.release!
 
 
-server = app.listen PORT, ->
+server = http.Server app
+io = sio server
+
+io.on \connection, (s) ->
+  console.log "incoming a socket.io connection ..."
+  return
+
+server.listen PORT, ->
   console.log "listening #{PORT}"
