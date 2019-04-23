@@ -46,5 +46,7 @@ dependencies:
   emailjs: \*
   mysql: \*
   uuid: \*
+  request: \*
+  lodash: \*
 
 optionalDependencies: {}

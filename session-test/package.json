@@ -22,7 +22,9 @@
     "mkdirp": "*",
     "emailjs": "*",
     "mysql": "*",
-    "uuid": "*"
+    "uuid": "*",
+    "request": "*",
+    "lodash": "*"
   },
   "optionalDependencies": {}
 }

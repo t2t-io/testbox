@@ -1,20 +1,21 @@
 #!/usr/bin/env lsc
 #
 require! <[crypto http]>
-require! <[express pug mysql uuid]>
+require! <[express pug mysql uuid request]>
 livescript-middleware = require \./src/livescript-middleware
 sio = require \socket.io
 email = require \emailjs
-session = require \express-session
-SFS = (require \session-file-store) session
+SESSION = require \express-session
+SFS = (require \session-file-store) SESSION
 sfs-opts =
   path: \./work/sessions
 
 const PORT = 7000
-const SESSION_MAX_AGES = 5m*60s*1000ms
+const SESSION_MAX_AGES = 60m*60s*1000ms
 const SALT = 'ilovetty'
 const MAILER = 'ultron@t2t.io'
 const HOST = "https://nuc54250b.t2t.io"
+const WSTTY_SERVER = "https://wstty.tic-tac-toe.io"
 
 
 pool = global.pool = mysql.createPool do
@@ -36,7 +37,8 @@ app.set 'trust proxy', yes
 app.set 'view engine', \pug
 app.set 'views', "#{__dirname}/assets/views"
 
-app.use session do
+
+session-middleware = SESSION do
   store: new SFS sfs-opts
   secret: \keyboard
   resave: no
@@ -46,7 +48,9 @@ app.use session do
     expires: new Date (Date.now! + SESSION_MAX_AGES)
     maxAge: SESSION_MAX_AGES
 
+app.use session-middleware
 app.use livescript-middleware src: "#{__dirname}/assets/scripts", dest: "#{__dirname}/work/js"
+app.use '/fonts', express.static "#{__dirname}/assets/public/fonts"
 app.use '/css', express.static "#{__dirname}/assets/public/css"
 app.use '/js', express.static "#{__dirname}/work/js"
 app.use '/js', express.static "#{__dirname}/assets/public/js"
@@ -176,10 +180,48 @@ app.get '/actions/activate/:activation', (req, res) ->
 
 server = http.Server app
 io = sio server
-
-io.on \connection, (s) ->
+ctrl = io.of \control
+ctrl.on \connection, (s) ->
   console.log "incoming a socket.io connection ..."
+  console.log "request.headers => #{JSON.stringify s.request.headers}"
+  # Inspired by https://github.com/expressjs/session/issues/58
+  #
+  session-middleware s.handshake, {}, (err) ->
+    if err?
+      console.log "failed to parse cookie, err: #{err}"
+      s.emit \unauthorized, {}
+    else if not s.handshake.session.user?
+      console.log "successfully parse session but no user is found!!"
+      s.emit \unauthorized, {}
+    else
+      {session} = s.handshake
+      {user} = session
+      # console.log "successfully parse session!! => user #{JSON.stringify user}"
+      {email} = user
+      agent-token = user.agent
+      console.log "socket.io[#{email}]: connection is established!!"
+      s.on \fn-get-agent-list, (opts, done) ->
+        console.log "#{email}/fn-get-agent-list: opts => #{JSON.stringify opts}"
+        url = "#{WSTTY_SERVER}/api/v1/a/agents"
+        qs = format: \advanced
+        (err, rsp, body) <- request.get {url, qs}
+        return done {err: "failed to get agent list: #{err}"} if err?
+        return done {err: "failed to get agent list due to non-200 response: #{rsp.statusCode}(#{rsp.statusMessage})"} unless rsp.statusCode is 200
+        console.log "body => #{body}"
+        try
+          json = JSON.parse body.toString!
+          {data} = json
+          return done {err: "data is not an array"} unless Array.isArray data
+          agents = data.filter (a) -> return a.system.rds is agent-token
+          console.log "socket.io[#{email}]: #{data.length} agents on the server, only #{agents.length} is owned by this user"
+          return done {data: agents}
+        catch error
+          return done {err: "failed to get agent list: #{error}"}
+        return done {data}
+
+
   return
+
 
 server.listen PORT, ->
   console.log "listening #{PORT}"
