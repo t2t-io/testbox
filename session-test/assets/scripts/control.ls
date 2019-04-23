@@ -58,9 +58,17 @@ class AgentPanel
                 </small></td>
                 </tr>
               <tr><td>actions</td><td>
-                  <button class="btn btn-info btn-xs" id="agent_button_console_#{uid}">
+                  <button class="btn btn-info btn-xs" id="agent_button_console_#{uid}_80_24">
                     <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
-                    Console
+                    Console (80x24)
+                  </button>
+                  <button class="btn btn-info btn-xs" id="agent_button_console_#{uid}_144_43">
+                    <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
+                    Console (144x43)
+                  </button>
+                  <button class="btn btn-info btn-xs" id="agent_button_console_#{uid}_144_43">
+                    <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
+                    Console (200x60)
                   </button>
                   </td>
                   <td></td>
@@ -112,8 +120,9 @@ class CategoryPanel
     """
 
 
-button-onclick-currying = (uid, action, dummy) -->
-  return window.contextManager.performAction uid, action
+buttonOnclickCurrying = (uid, action, args, dummy) -->
+  console.log "buttonOnclickCurrying: uid #{uid}, action: #{action}"
+  return window.contextManager.performAction uid, action, args
 
 
 class AgentDashboard
@@ -153,9 +162,11 @@ class AgentDashboard
     for b in buttons
       id = b.id
       tokens = id.split '_'
-      action = tokens[2]
-      uid = parseInt tokens[3]
-      f = button-onclick-currying uid, action
+      [x1, x2, action, uid, ...args] = tokens
+      uid = parseInt uid
+      xs = {uid, action, args}
+      # console.log "detect button id #{JSON.stringify xs}"
+      f = buttonOnclickCurrying uid, action, args
       b.onclick = f
 
 
@@ -187,8 +198,12 @@ class ContextManager
       {categories} = self
       categories[key] = [] unless categories[key]
       categories[key].push xs
+  
+  performAction: (uid, action, args) ->
+    return @.performConsoleAction uid, args if action is \console
+    return console.log "unsupported action: #{action}, for uid #{uid} with args: #{JSON.stringify args}"
 
-  performAction: (uid, action) ->
+  performConsoleAction: (uid, args) ->
     a = @agents[uid]
     # console.log "perform-action: #{action} => #{JSON.stringify a}"
     {id, system} = a
@@ -199,6 +214,16 @@ class ContextManager
     xs[0].hidden = no
     xs = $ '\#terminal-title'
     xs[0].innerHTML = "#{id}"
+    [cols, rows] = args
+    rows = parseInt rows
+    cols = parseInt cols
+    xs = {rows, cols}
+    console.log "console: #{uid}/#{id}/#{hostname}, with args: #{JSON.stringify xs}"
+    useStyle = screenKeys = cursorBlink = yes
+    term = window.term = new Terminal {cols, rows, useStyle, screenKeys, cursorBlink}
+    xs = $ '\#term'
+    term.open xs[0]
+    term.write "\x1b[31mWelcome to #{id}\x1b[m\r\n"
 
 
 <- $
